@@ -97,7 +97,7 @@ def message_text(event):
     umsg = event.message.text.split()
 
     reply_text_list = get_cheapest_price_item_yahoo(umsg[0])
-    reply_text = "最安値の商品は↓↓↓\n\n" + "商品名：" + reply_text_list[0] + "\n" + "価格：" + str(
+    reply_text = "うーん、今の日本における最安値の商品はこれですかね。\n\n" + "商品名：" + reply_text_list[0] + "\n" + "価格：" + str(
         reply_text_list[2]) + "\n" + "商品URL：" + reply_text_list[1]
 
     line_bot_api.reply_message(event.reply_token,
