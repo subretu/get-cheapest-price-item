@@ -60,8 +60,6 @@ def callback():
     return 'OK'
 
 # 最安値取得
-
-
 def get_cheapest_price_item_yahoo(keyword):
 
     itemsearchurl = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch"
