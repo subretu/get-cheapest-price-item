@@ -13,7 +13,7 @@
 #  under the License.
 
 import os
-import sys
+import sy
 import requests
 import json
 import datetime
@@ -59,7 +59,7 @@ def callback():
 
     return 'OK'
 
-# 最安値取得
+# Yahooより最安値取得関数
 def get_cheapest_price_item_yahoo(keyword):
 
     itemsearchurl = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch"
@@ -80,25 +80,62 @@ def get_cheapest_price_item_yahoo(keyword):
     response = requests.get(itemsearchurl, params=params)
     results = response.json()
 
-    # with open('./mydata.json', mode='wt', encoding='utf-8') as file:
-    #    json.dump(results, file, ensure_ascii=False, indent=2)
-
-    #print('商品名：' + results['hits'][0]['name'])
-    #print('商品URL：' + results['hits'][0]['url'])
-    #print('価格：' + str(results['hits'][0]['price']))
-
     return results['hits'][0]['name'], results['hits'][0]['url'], results['hits'][0]['price']
+
+# 楽天より最安値取得関数
+def get_cheapest_price_item_rakuten():
+
+    itemsearchurl = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
+
+    # 文字列をutf8に変換
+    # sentence = parse.quote(text.encode('utf-8'))
+
+    # リクエストパラメーター
+    params = {'Content-Type': 'application/json',
+              'applicationId': os.getenv('RAKUTEN_API_ID', None),
+              "format": "json",
+              "formatVersion": 2,
+              "keyword": keyword,
+              "availability": 0,
+              "hits": 10,
+              "page": 1,
+              "sort": "+itemPrice",
+              "NGKeyword": "中古",
+              "postageFlag": 1
+              }
+
+    # API接続の実行
+    response = requests.get(itemsearchurl, params=params)
+    results = response.json()
+
+    return results['Items'][0]['itemName'], results['Items'][0]['itemUrl'], results['Items'][0]['itemPrice']
 
 
 @handler.add(MessageEvent, message=TextMessage)
 def message_text(event):
 
     # 受信メッセージを分割
-    umsg = event.message.text.split()
+    #umsg = event.message.text.split()
 
-    reply_text_list = get_cheapest_price_item_yahoo(umsg[0])
-    reply_text = "うーん、今の日本における最安値の商品はこれですかね。\n\n" + "商品名：" + reply_text_list[0] + "\n" + "価格：" + str(
-        reply_text_list[2]) + "\n" + "商品URL：" + reply_text_list[1]
+    result_list_yahoo = get_cheapest_price_item_yahoo(event.message.text)
+    result_list_rakuten = get_cheapest_price_item_rakuten(event.message.text)
+
+    if result_list_yahoo[2] < result_list_rakuten[2]:
+        reply_text = "うーん、今の日本における最安値の商品はこれですかね。\n\n" + "商品名：" + \
+            result_list_yahoo[0] + "\n" + "価格：" + \
+            str(result_list_yahoo[2]) + "\n" + "商品URL：" + result_list_yahoo[1]
+    elif result_list_yahoo[2] > result_list_rakuten[2]:
+        reply_text = "うーん、今の日本における最安値の商品はこれですかね。\n\n" + "商品名：" + \
+            result_list_rakuten[0] + "\n" + "価格：" + \
+            str(result_list_rakuten[2]) + "\n" + \
+            "商品URL：" + result_list_rakuten[1]
+    # 現時点ではYahooの方を返すようにしているが、ポイントを加味するようにする予定
+    elif result_list_yahoo[2] == result_list_rakuten[2]:
+        reply_text = "うーん、今の日本における最安値の商品はこれですかね。\n\n" + "商品名：" + \
+            result_list_yahoo[0] + "\n" + "価格：" + \
+            str(result_list_yahoo[2]) + "\n" + "商品URL：" + result_list_yahoo[1]
+    else:
+        reply_text = "うーん、もう一度検索ワードを入れてもらえるかな？"
 
     line_bot_api.reply_message(event.reply_token,
                                TextSendMessage(text=reply_text))
