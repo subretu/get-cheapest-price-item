@@ -13,7 +13,7 @@
 #  under the License.
 
 import os
-import sy
+import sys
 import requests
 import json
 import datetime
@@ -115,10 +115,10 @@ def get_cheapest_price_item_rakuten(keyword):
 def message_text(event):
 
     # 受信メッセージを分割
-    #umsg = event.message.text.split()
+    umsg = event.message.text.split()
 
-    result_list_yahoo = get_cheapest_price_item_yahoo(event.message.text)
-    result_list_rakuten = get_cheapest_price_item_rakuten(event.message.text)
+    result_list_yahoo = get_cheapest_price_item_yahoo(umsg[0])
+    result_list_rakuten = get_cheapest_price_item_rakuten(umsg[0])
 
     if result_list_yahoo[2] < result_list_rakuten[2]:
         reply_text = "うーん、今の日本における最安値の商品はこれですかね。\n\n" + "商品名：" + \
