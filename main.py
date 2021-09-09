@@ -83,7 +83,7 @@ def get_cheapest_price_item_yahoo(keyword):
     return results['hits'][0]['name'], results['hits'][0]['url'], results['hits'][0]['price']
 
 # 楽天より最安値取得関数
-def get_cheapest_price_item_rakuten():
+def get_cheapest_price_item_rakuten(keyword):
 
     itemsearchurl = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
 
