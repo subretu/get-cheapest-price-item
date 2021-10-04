@@ -18,7 +18,7 @@ import requests
 import json
 import datetime
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Header, Request
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from linebot.models import (  # 使用するモデル(イベント, メッセージ, アクションなど)を列挙
@@ -43,6 +43,16 @@ line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
+
+router = APIRouter(
+    prefix="/webhooks",
+    tags=["chatbot"],
+    responses={404: {"description": "Not found"}},
+)
+
+app.include_router(router)
+
+"""
 @app.route("/callback", methods=['POST'])
 async def callback(request: Request):
     # get X-Line-Signature header value
@@ -53,13 +63,23 @@ async def callback(request: Request):
     app.logger.info("Request body: " + body)
 
     # handle webhook body
-    """
+
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-    """
 
+
+    return 'OK'
+"""
+
+@router.post("/line")
+async def callback(request: Request, x_line_signature: str = Header(None)):
+    body = await request.body()
+    try:
+        handler.handle(body.decode("utf-8"), x_line_signature)
+    except InvalidSignatureError:
+        raise HTTPException(status_code=400, detail="chatbot handle body error.")
     return 'OK'
 
 # Yahooより最安値取得関数
@@ -142,3 +162,6 @@ async def message_text(event):
 
     line_bot_api.reply_message(event.reply_token,
                                TextSendMessage(text=reply_text))
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
