@@ -43,15 +43,6 @@ line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
-
-router = APIRouter(
-    prefix="/webhooks",
-    tags=["chatbot"],
-    responses={404: {"description": "Not found"}},
-)
-
-app.include_router(router)
-
 """
 @app.route("/callback", methods=['POST'])
 async def callback(request: Request):
@@ -73,13 +64,15 @@ async def callback(request: Request):
     return 'OK'
 """
 
-@router.post("/callback")
-async def callback(request: Request, x_line_signature: str = Header(None)):
-    body = await request.body()
-    try:
-        handler.handle(body.decode("utf-8"), x_line_signature)
-    except InvalidSignatureError:
-        raise HTTPException(status_code=400, detail="chatbot handle body error.")
+@app.post("/callback")
+async def callback(request: Request):
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
+
+    # get request body as text
+    body = request.get_data(as_text=True)
+    #app.logger.info("Request body: " + body)
+
     return 'OK'
 
 # Yahooより最安値取得関数
