@@ -18,7 +18,7 @@ import requests
 import json
 import datetime
 import uvicorn
-from fastapi import FastAPI, APIRouter, HTTPException, Header, Request
+from fastapi import FastAPI, Request
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from linebot.models import (  # 使用するモデル(イベント, メッセージ, アクションなど)を列挙
@@ -72,6 +72,8 @@ async def callback(request: Request):
     # get request body as text
     body = request.get_data(as_text=True)
     #app.logger.info("Request body: " + body)
+
+    handler.handle(body, signature)
 
     return 'OK'
 
