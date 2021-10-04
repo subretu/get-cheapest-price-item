@@ -17,7 +17,8 @@ import sys
 import requests
 import json
 import datetime
-from flask import Flask, request, abort
+import uvicorn
+from fastapi import FastAPI, Request
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from linebot.models import (  # 使用するモデル(イベント, メッセージ, アクションなど)を列挙
@@ -26,7 +27,7 @@ from linebot.models import (  # 使用するモデル(イベント, メッセー
     CarouselColumn, PostbackTemplateAction, StickerSendMessage, MessageAction,
     ConfirmTemplate, PostbackAction)
 
-app = Flask(__name__)
+app = FastAPI()
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
@@ -43,24 +44,26 @@ handler = WebhookHandler(channel_secret)
 
 
 @app.route("/callback", methods=['POST'])
-def callback():
+async def callback():
     # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
+    signature = Request.headers['X-Line-Signature']
 
     # get request body as text
-    body = request.get_data(as_text=True)
+    body = Request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
 
     # handle webhook body
+    """
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
+    """
 
     return 'OK'
 
 # Yahooより最安値取得関数
-def get_cheapest_price_item_yahoo(keyword):
+async def get_cheapest_price_item_yahoo(keyword):
 
     itemsearchurl = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch"
 
@@ -83,7 +86,7 @@ def get_cheapest_price_item_yahoo(keyword):
     return results['hits'][0]['name'], results['hits'][0]['url'], results['hits'][0]['price']
 
 # 楽天より最安値取得関数
-def get_cheapest_price_item_rakuten(keyword):
+async def get_cheapest_price_item_rakuten(keyword):
 
     itemsearchurl = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
 
@@ -112,7 +115,7 @@ def get_cheapest_price_item_rakuten(keyword):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-def message_text(event):
+async def message_text(event):
 
     # 受信メッセージを分割
     umsg = event.message.text.split()
@@ -139,8 +142,3 @@ def message_text(event):
 
     line_bot_api.reply_message(event.reply_token,
                                TextSendMessage(text=reply_text))
-
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
