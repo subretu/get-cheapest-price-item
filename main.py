@@ -73,7 +73,7 @@ async def callback(request: Request):
     return 'OK'
 """
 
-@router.post("/line")
+@router.post("/callback")
 async def callback(request: Request, x_line_signature: str = Header(None)):
     body = await request.body()
     try:
