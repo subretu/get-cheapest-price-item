@@ -44,17 +44,17 @@ handler = WebhookHandler(channel_secret)
 
 
 @app.post("/callback")
-async def handle_request(request: Request):
-    # リクエストをパースしてイベントを取得（署名の検証あり）
-    events = handler.parse(
-        (await request.body()).decode("utf-8"),
-        request.headers.get("X-Line-Signature", ""))
+def callback(request: Request):
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
 
-    # 各イベントを処理
-    for ev in events:
-        await line_bot_api.reply_message_async(
-            ev.reply_token,
-            TextMessage(text=f"You said: {ev.message.text}"))
+    # get request body as text
+    body = request.get_data(as_text=True)
+    #app.logger.info("Request body: " + body)
+
+    # handle webhook body
+
+    handler.handle(body, signature)
 
     # LINEサーバへHTTP応答を返す
     return "ok"
