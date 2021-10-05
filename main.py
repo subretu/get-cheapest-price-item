@@ -49,12 +49,13 @@ def callback(request: Request):
     signature = request.headers['X-Line-Signature']
 
     # get request body as text
-    body = request.get_data(as_text=True)
+    #body = request.get_data(as_text=True)
+    body = request.body()
     #app.logger.info("Request body: " + body)
 
     # handle webhook body
 
-    handler.handle(body, signature)
+    handler.handle(body.decode(), signature)
 
     # LINEサーバへHTTP応答を返す
     return "ok"
