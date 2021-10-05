@@ -1,1 +1,1 @@
-web: python -m uvicorn main:app --host 0.0.0.0
+web: python main.py
