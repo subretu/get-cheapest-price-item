@@ -17,7 +17,8 @@ import sys
 import requests
 import json
 import datetime
-from flask import Flask, request, abort
+import uvicorn
+from fastapi import FastAPI, Request
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from linebot.models import (  # 使用するモデル(イベント, メッセージ, アクションなど)を列挙
@@ -26,7 +27,7 @@ from linebot.models import (  # 使用するモデル(イベント, メッセー
     CarouselColumn, PostbackTemplateAction, StickerSendMessage, MessageAction,
     ConfirmTemplate, PostbackAction)
 
-app = Flask(__name__)
+app = FastAPI()
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
@@ -42,22 +43,21 @@ line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
-@app.route("/callback", methods=['POST'])
-def callback():
+@app.post("/callback")
+def callback(request: Request):
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
 
     # get request body as text
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    #app.logger.info("Request body: " + body)
 
     # handle webhook body
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
 
-    return 'OK'
+    handler.handle(body, signature)
+
+    # LINEサーバへHTTP応答を返す
+    return "ok"
 
 # Yahooより最安値取得関数
 def get_cheapest_price_item_yahoo(keyword):
@@ -112,7 +112,7 @@ def get_cheapest_price_item_rakuten(keyword):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-def message_text(event):
+async def message_text(event):
 
     # 受信メッセージを分割
     umsg = event.message.text.split()
@@ -139,8 +139,7 @@ def message_text(event):
 
     line_bot_api.reply_message(event.reply_token,
                                TextSendMessage(text=reply_text))
-
-
+"""
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    uvicorn.run("main:app", host="0.0.0.0", reload=True)
+    """
