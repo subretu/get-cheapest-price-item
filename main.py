@@ -43,42 +43,24 @@ line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
-"""
-@app.route("/callback", methods=['POST'])
-async def callback(request: Request):
-    # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
-
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
-
-    # handle webhook body
-
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-
-
-    return 'OK'
-"""
-
 @app.post("/callback")
-async def callback(request: Request):
-    # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
+async def handle_request(request: Request):
+    # リクエストをパースしてイベントを取得（署名の検証あり）
+    events = handler.parse(
+        (await request.body()).decode("utf-8"),
+        request.headers.get("X-Line-Signature", ""))
 
-    # get request body as text
-    body = request.get_data(as_text=True)
-    #app.logger.info("Request body: " + body)
+    # 各イベントを処理
+    for ev in events:
+        await line_bot_api.reply_message_async(
+            ev.reply_token,
+            TextMessage(text=f"You said: {ev.message.text}"))
 
-    handler.handle(body, signature)
-
-    return 'OK'
+    # LINEサーバへHTTP応答を返す
+    return "ok"
 
 # Yahooより最安値取得関数
-async def get_cheapest_price_item_yahoo(keyword):
+def get_cheapest_price_item_yahoo(keyword):
 
     itemsearchurl = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch"
 
@@ -101,7 +83,7 @@ async def get_cheapest_price_item_yahoo(keyword):
     return results['hits'][0]['name'], results['hits'][0]['url'], results['hits'][0]['price']
 
 # 楽天より最安値取得関数
-async def get_cheapest_price_item_rakuten(keyword):
+def get_cheapest_price_item_rakuten(keyword):
 
     itemsearchurl = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
 
