@@ -116,7 +116,7 @@ def get_cheapest_price_item_rakuten(keyword):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-async def message_text(event):
+def message_text(event):
 
     # 受信メッセージを分割
     umsg = event.message.text.split()
