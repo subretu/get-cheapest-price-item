@@ -17,8 +17,7 @@ import sys
 import requests
 import json
 import datetime
-import uvicorn
-from fastapi import FastAPI, Request
+from flask import Flask, request, abort
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from linebot.models import (  # 使用するモデル(イベント, メッセージ, アクションなど)を列挙
@@ -27,7 +26,7 @@ from linebot.models import (  # 使用するモデル(イベント, メッセー
     CarouselColumn, PostbackTemplateAction, StickerSendMessage, MessageAction,
     ConfirmTemplate, PostbackAction)
 
-app = FastAPI()
+app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
@@ -43,21 +42,22 @@ line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
-@app.post("/callback")
-def callback(request: Request):
+@app.route("/callback", methods=['POST'])
+def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
 
     # get request body as text
     body = request.get_data(as_text=True)
-    #app.logger.info("Request body: " + body)
+    app.logger.info("Request body: " + body)
 
     # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
 
-    handler.handle(body, signature)
-
-    # LINEサーバへHTTP応答を返す
-    return "ok"
+    return 'OK'
 
 # Yahooより最安値取得関数
 def get_cheapest_price_item_yahoo(keyword):
@@ -112,7 +112,7 @@ def get_cheapest_price_item_rakuten(keyword):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-async def message_text(event):
+def message_text(event):
 
     # 受信メッセージを分割
     umsg = event.message.text.split()
@@ -140,5 +140,7 @@ async def message_text(event):
     line_bot_api.reply_message(event.reply_token,
                                TextSendMessage(text=reply_text))
 
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", reload=True)
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
