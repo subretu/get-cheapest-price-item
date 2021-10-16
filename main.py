@@ -45,25 +45,19 @@ handler = WebhookHandler(channel_secret)
 
 @app.post("/callback")
 async def callback(request: Request):
-    # get X-Line-Signature header value
+
     signature = request.headers['X-Line-Signature']
-
-    # get request body as text
-    #body = request.get_data(as_text=True)
-    #app.logger.info("Request body: " + body)
-
-    # handle webhook body
-
 
     body = await request.body()
 
     handler.handle(body.decode("utf-8"), signature)
 
-
     # LINEサーバへHTTP応答を返す
     return "ok"
 
 # Yahooより最安値取得関数
+
+
 def get_cheapest_price_item_yahoo(keyword):
 
     itemsearchurl = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch"
@@ -87,6 +81,8 @@ def get_cheapest_price_item_yahoo(keyword):
     return results['hits'][0]['name'], results['hits'][0]['url'], results['hits'][0]['price']
 
 # 楽天より最安値取得関数
+
+
 def get_cheapest_price_item_rakuten(keyword):
 
     itemsearchurl = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
@@ -143,6 +139,8 @@ def message_text(event):
 
     line_bot_api.reply_message(event.reply_token,
                                TextSendMessage(text=reply_text))
+
+
 """
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", reload=True)
