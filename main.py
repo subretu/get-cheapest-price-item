@@ -44,17 +44,12 @@ handler = WebhookHandler(channel_secret)
 
 
 @app.post("/callback")
-#async def callback(request: Request):
-def callback(request: Request):
-
+async def callback(request: Request):
     signature = request.headers['X-Line-Signature']
 
-    #body = await request.body()
-    body = request.body()
+    body = await request.body()
 
-
-    #handler.handle(body.decode("utf-8"), signature)
-    handler.handle(body, signature)
+    handler.handle(body.decode("utf-8"), signature)
 
     # LINEサーバへHTTP応答を返す
     return "ok"
