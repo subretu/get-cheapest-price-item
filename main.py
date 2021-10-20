@@ -53,7 +53,8 @@ def callback(request: Request):
     body = request.body()
 
 
-    handler.handle(body.decode("utf-8"), signature)
+    #handler.handle(body.decode("utf-8"), signature)
+    handler.handle(body, signature)
 
     # LINEサーバへHTTP応答を返す
     return "ok"
